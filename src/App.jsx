@@ -15,6 +15,7 @@ const initialState = {
   index: 0,
   answer: null,
   points: 0,
+  highscore: 0,
 };
 
 function reducerFn(state, action) {
@@ -63,6 +64,17 @@ function reducerFn(state, action) {
       return {
         ...state,
         status: "finished",
+        highscore: state.points > state.highscore ? state.points : state.highscore,
+      };
+    }
+
+    case "restart": {
+      return {
+        ...state,
+        status: "ready",
+        index: 0,
+        answer: null,
+        points: 0,
       };
     }
 
@@ -73,7 +85,7 @@ function reducerFn(state, action) {
 }
 
 function App() {
-  const [{ questions, status, index, answer, points }, dispatch] = useReducer(reducerFn, initialState);
+  const [{ questions, status, index, answer, points, highscore }, dispatch] = useReducer(reducerFn, initialState);
 
   const numQuestions = questions.length;
 
@@ -102,6 +114,11 @@ function App() {
   function handleFinish(e) {
     e.preventDefault;
     dispatch({ type: "finished" });
+  }
+
+  function handleRestart(e) {
+    e.preventDefault;
+    dispatch({ type: "restart" });
   }
 
   useEffect(() => {
@@ -155,7 +172,7 @@ function App() {
 
         {status === "finished" && (
           <>
-            <FinishScreen points={points} maxPoints={maxPoints} />
+            <FinishScreen points={points} maxPoints={maxPoints} highscore={highscore} onRestart={handleRestart} />
           </>
         )}
       </main>
