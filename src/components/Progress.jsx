@@ -1,8 +1,6 @@
 import React from "react";
 
 const Progress = ({ index, numQuestions, points, maxPoints, answer }) => {
-  console.log(index, numQuestions);
-
   return (
     <header className="progress">
       <progress max={numQuestions} value={index + Number(answer !== null)} />

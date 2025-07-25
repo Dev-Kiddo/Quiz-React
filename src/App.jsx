@@ -7,6 +7,8 @@ import Error from "./components/Error.jsx";
 import StartScreen from "./components/StartScreen.jsx";
 import FinishScreen from "./components/FinishScreen.jsx";
 
+const SECS_PER_QUIZZ = 30;
+
 const initialState = {
   questions: [],
 
@@ -16,6 +18,7 @@ const initialState = {
   answer: null,
   points: 0,
   highscore: 0,
+  secondsRemaining: null,
 };
 
 function reducerFn(state, action) {
@@ -39,6 +42,7 @@ function reducerFn(state, action) {
       return {
         ...state,
         status: "active",
+        secondsRemaining: state.questions.length * SECS_PER_QUIZZ,
       };
     }
 
@@ -68,7 +72,7 @@ function reducerFn(state, action) {
       };
     }
 
-    case "restart": {
+    case "restart":
       return {
         ...state,
         status: "ready",
@@ -76,7 +80,13 @@ function reducerFn(state, action) {
         answer: null,
         points: 0,
       };
-    }
+
+    case "timer":
+      return {
+        ...state,
+        secondsRemaining: state.secondsRemaining - 1,
+        status: state.secondsRemaining === 0 ? "finished" : state.status,
+      };
 
     default: {
       throw new Error("Action Unknown");
@@ -85,13 +95,11 @@ function reducerFn(state, action) {
 }
 
 function App() {
-  const [{ questions, status, index, answer, points, highscore }, dispatch] = useReducer(reducerFn, initialState);
+  const [{ questions, status, index, answer, points, highscore, secondsRemaining }, dispatch] = useReducer(reducerFn, initialState);
 
   const numQuestions = questions.length;
 
   const maxPoints = questions.reduce((perv, cur) => perv + cur.points, 0);
-
-  console.log(maxPoints);
 
   function handleStart(e) {
     e.preventDefault;
@@ -99,10 +107,7 @@ function App() {
   }
 
   function handleAnswer(answer) {
-    console.log("answer:", answer);
-
     dispatch({ type: "newAnswer", payload: answer });
-    console.log(initialState);
   }
 
   function handleNext(e) {
@@ -121,6 +126,10 @@ function App() {
     dispatch({ type: "restart" });
   }
 
+  function handleTimer() {
+    dispatch({ type: "timer" });
+  }
+
   useEffect(() => {
     async function fetchData() {
       await fetch("http://localhost:8000/questions")
@@ -134,15 +143,6 @@ function App() {
 
     fetchData();
   }, []);
-
-  useEffect(
-    function () {
-      console.log("questions:", questions);
-      console.log("updatedAnswer:", answer);
-      console.log("updatedPoints:", points);
-    },
-    [questions, answer, points]
-  );
 
   return (
     <div className="app">
@@ -167,6 +167,8 @@ function App() {
             answer={answer}
             maxPoints={maxPoints}
             onFinish={handleFinish}
+            secondsRemaining={secondsRemaining}
+            handleTimer={handleTimer}
           />
         )}
 
